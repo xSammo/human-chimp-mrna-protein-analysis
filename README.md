@@ -1,5 +1,11 @@
 # Comparative Analysis of mRNA and Protein Expression in Humans and Chimpanzees
+
 This project uses R to analyze differences in mRNA and protein expression levels between humans and chimpanzees. The analysis spans multiple tasks, including visualization, statistical testing, and modeling, with a focus on exploring relationships and reproducibility across species and conditions.
+
+Utilizing Bioconductor packcages such as BiocManager to install the 'ALL' dataset.
+'ALL' library is the Acute Lymphoblastic Leukemia library that is a collection of gene expression or genomic data related to Acute Lymphoblastic Leukemia Cancer. 
+
+
 Learning Outcomes:
 Hands-on experience in bioinformatics data analysis using R.
 Application of statistical methods to real-world biological datasets.
