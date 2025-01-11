@@ -7,17 +7,17 @@ Skills in visualizing complex datasets to derive meaningful biological insights.
 
 
 Key Objectives:
-Data Visualization:
 
+Data Visualization:
 Created scatter plots to compare mRNA and protein expression levels for two samples, “143” and “159.”
 Analyzed trends and patterns in expression differences between species.
-Statistical Analysis:
 
+Statistical Analysis:
 Performed correlation analysis to quantify the relationship between human and chimpanzee expression levels.
 Conducted t-tests to identify statistically significant differences in gene expression between species.
 Ran linear regression models to explore the relationship between mRNA and protein expression levels.
-Dimensional Comparisons:
 
+Dimensional Comparisons:
 Calculated mean expression levels across replicates and evaluated reproducibility between datasets.
 Identified shared genes between datasets and compared their expression trends.
 Advanced Modeling:
@@ -28,6 +28,7 @@ Data Interpretation:
 
 Provided detailed insights into the biological relevance of observed patterns and trends.
 Compared findings with published results to validate methodology.
+
 Deliverables:
 Plots and Visualizations:
 Scatter plots, histograms, and QQ plots for various analyses.
