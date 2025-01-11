@@ -1,0 +1,553 @@
+---
+title: "Human v Chimp mRNA Protein Analysis"
+author: "Sammi Huang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+### 1. Plot mean values of chimp mRNA vs human mRNA and and chimp protein expression levels vs human protein expression levels, averaged over six and three replicates respectively, for each of the samples "143" and "159". You should obtain four plots -- chimp vs human protein and chimp vs human mRNA -- for two data samples. Describe results of visual exploration of these plots. In other words, loop through the rows of the human and chimp data and obtain the mean for each row. Then create a scatter plot of the means with the human sample on the x-axis and the chimp sample on the y-axis.
+
+```{r Question 1, echo=TRUE}
+
+#Read file skip =2 to skip first 2 rows since the i want row 3 to be my headers
+data_143 <- read.table("journal_1_.pone.0000216.s007.txt", header=TRUE, sep="\t", skip=2)
+
+data_159 <- read.table("journal_1_.pone.0000216.s008.txt", header=TRUE, sep="\t", skip=2)
+
+table_s3 <- read.table("TableS3.txt", header=TRUE, sep = "\t")
+
+
+data_143.df <- data.frame(data_143)
+#Change character to numeric
+data_143.df[, 4:21] <- lapply(data_143.df[, 4:21], function(x) as.numeric(as.character(x))); sapply(data_143.df,class)
+
+#mean of Chimp mRNA on 143 proteins
+chimp_mRNA_mean <- vector(length=nrow(data_143.df))
+for (i in 2:nrow(data_143.df)) {
+     # Calculate the row mean for columns 4 to 9
+     chimp_mRNA_mean[i] <- rowMeans(data_143.df[i, 4:9])
+}
+
+#mean of Human mR of 143 proteins
+human_mRNA_mean <- vector(length=nrow(data_143.df))
+for (i in 2:nrow(data_143.df)) {
+    # Calculate the row mean for columns 4 to 9
+    human_mRNA_mean[i] <- rowMeans(data_143.df[i, 10:15])
+}
+
+plot(human_mRNA_mean, chimp_mRNA_mean, main="Human vs Chimp mRNA Mean '143' ", xlim=c(5,15), ylim=c(5,15))
+
+#mean of Chimp protein exp on 143 proteins
+chimp_protein_mean <- vector(length=nrow(data_143.df))
+for (i in 2:nrow(data_143.df)) {
+    
+    chimp_protein_mean[i] <- rowMeans(data_143.df[i, 16:18])
+}
+
+#mean of human protein exp on 143 proteins
+human_protein_mean <- vector(length=nrow(data_143.df))
+for (i in 2:nrow(data_143.df)) {
+    
+    human_protein_mean[i] <- rowMeans(data_143.df[i, 19:21])
+}
+
+plot(human_protein_mean, chimp_protein_mean, main="Human vs Chimp Protein Mean '143' ")
+
+#protein 159
+data_159.df <- data.frame(data_159)
+data_159.df[, 4:21] <- lapply(data_159.df[, 4:21], function(x) as.numeric(as.character(x)))
+
+#mean of Chimp mRNA on 159 proteins
+chimp_mRNA_mean_159 <- vector(length=nrow(data_159.df))
+for (i in 2:nrow(data_159.df)) {
+     chimp_mRNA_mean_159[i] <- rowMeans(data_159.df[i, 4:9])
+}
+
+#mean of human mRNA on 159 proteins
+human_mRNA_mean_159 <- vector(length=nrow(data_159.df))
+for (i in 2:nrow(data_159.df)) {
+     human_mRNA_mean_159[i] <- rowMeans(data_159.df[i, 10:15])
+}
+
+plot(human_mRNA_mean_159, chimp_mRNA_mean_159, main="Human vs Chimp mRNA Mean '159'",xlim=c(5,15), ylim=c(5,15))
+
+#mean of chimp protein exp on 159 proteins
+chimp_protein_mean_159 <- vector(length=nrow(data_159.df))
+for (i in 2:nrow(data_159.df)) {
+     chimp_protein_mean_159[i] <- rowMeans(data_159.df[i, 16:18])
+}
+
+#mean of human protein exp on 159 proteins
+human_protein_mean_159 <- vector(length=nrow(data_159.df))
+for (i in 2:nrow(data_159.df)) {
+     human_protein_mean_159[i] <- rowMeans(data_159.df[i, 19:21])
+}
+plot(human_protein_mean_159, chimp_protein_mean_159, main="Human vs Chimp Protein Mean '159'")
+
+```
+
+For protein 143, the mean of human and chimp mRNA expression showed a positive correlation relationship, however, the protein mean between human and chimp was more spread out. It did have a small cluster between -0.5 to 0.5 on the x-axis. For protein 159, the mean of human and chimp mRNA expression displayed a similar trend to protein 143. There is also a similar trend when visually analyzing the human and chimp mean of protein mean compared to protein 143.
+
+### 2. Using R function cor calculate correlations of mean mRNA levels between chimps and humans and mean protein levels between chimps and humans for both samples "143" and "159". Compare and describe results in writing.
+
+```{r Question 2, echo=TRUE}
+#calculate correlation of mean mRNA between chimps and humans for protein 143
+cor(human_mRNA_mean, chimp_mRNA_mean, use="complete.obs")
+#calculate the correlation of mean protein expression between chimps and humans for protein 143
+cor(human_protein_mean, chimp_mRNA_mean, use="complete.obs")
+#calculate correlation of mean mRNA between chimps and humans for protein 159
+cor(human_mRNA_mean_159, chimp_mRNA_mean_159, use="complete.obs")
+#calculate correlation of mean protein expression between chimps and humans for protein 159
+cor(human_protein_mean_159, chimp_protein_mean_159, use="complete.obs")
+```
+
+The correlation of mRNA expression between humans and chimps for protein 143 is close to 1 which indicates a strong linear relationship between the two variables. We can see a similar relationship when we compare the mRNA expression between humans and chimp for protein 159. However, when we look at the correlation of protein expression between humans and chimps in both protein 143 and protein 159, we can see a weak linear relationship between the two variables and lack of association between the two.
+
+### 3. Fit four linear models for the following relationships: mean mRNA(human) vs mean mRNA(chimp), mean protein level (human) vs mean protein level (chimp), in each of the samples "143" and "159". Present summary and model diagnostics, anova analysis of relationship significance, compare and describe results in plain English.
+
+```{r Question 3, echo=TRUE}
+#linear model for mean mRNA human vs. chimp + mean protein exp human vs. chimp for protein143
+mRNA_143.lm <- lm(human_mRNA_mean~chimp_mRNA_mean, data=na.omit(data_143.df))
+protein_143.lm <- lm(human_protein_mean~chimp_protein_mean, data=na.omit(data_143.df))
+#linear model for mean RNA human vs. chimp + mean protein exp human vs. chimp for protein159
+mRNA_159.lm <- lm(human_mRNA_mean_159~chimp_mRNA_mean_159, data=na.omit(data_159.df))
+protein_159.lm <- lm(human_protein_mean_159~chimp_protein_mean_159, data=na.omit(data_159.df))
+#summary
+summary(mRNA_143.lm);summary(protein_143.lm)
+
+summary(mRNA_159.lm);summary(protein_159.lm)
+
+#anova
+anova(mRNA_143.lm); anova(protein_143.lm)
+anova(mRNA_159.lm); anova(protein_159.lm)
+
+```
+
+The analysis of mRNA in humans and chimps for protein 143 demonstrates that there is a strong positive relationship between the mean mRNA of humans and chimps. The model suggested that there is about 93.4% of variability therefore suggesting that the model is a good fit for data. However the summary analysis of protein expression in humans and chimps for protein 143 demonstrated a negative relationship between the two variables. The analysis for protein 159 demonstrated that the mRNA in humans and chimps had a 93.13% variation with a small p-value which indicates that the relationship is statistically significant. This suggest that there is a strong positive relationship between human mRNA mean and chimp mRNA mean. When analyzing protein mean in protein 159, the data suggests that there is no significant relationship between human protein mean and chimp protein mean.
+
+### 4. Draw plots representing relationship between mean mRNA and protein levels for each species, in each of the samples. Describe results of their comparison.
+
+```{r Question 4, echo=TRUE}
+par(mfrow=c(2,2))
+plot(human_mRNA_mean, human_protein_mean)
+plot(chimp_mRNA_mean, chimp_protein_mean)
+plot(human_mRNA_mean_159, human_protein_mean_159)
+plot(chimp_mRNA_mean_159, chimp_protein_mean_159)
+```
+
+In humans, protein 143 and protein 159 comparing mean of mRNA and mean of protein expression showed similar results. Scatter plots clustered in the same area with slight differences in mean protein expression with protein 143 being slightly lower than protein 159. In chimps, protein 143 and protein 159 had some differences. Although the cluster is between 6 to 15 for mRNA for both protein 143 and protein 159, there are differences in protein expression. The scatter plot shows that the protein 143 gathers around the -1 to 1 for protein expression with a few outliers going above 1. In protein 159, there are outliers towards -4.
+
+### 5. Calculate differences between mean mRNA levels for human and chimps and mean protein levels for human and chimps. Plot these differences --difference in protein levels vs difference in mRNA levels, for both samples. These are the relationships represented by panel A and C in supplementary figure S2 -- compare and describe results.
+
+```{r Question 5, echo=TRUE}
+#calculate differences
+diff_mRNA_143 <- na.omit(human_mRNA_mean) - na.omit(chimp_mRNA_mean)
+diff_protein_143 <- na.omit(human_protein_mean) - na.omit(chimp_protein_mean)
+diff_mRNA_159 <- na.omit(human_mRNA_mean_159) - na.omit(chimp_mRNA_mean_159)
+diff_protein_159 <- na.omit(human_protein_mean_159) - na.omit(chimp_protein_mean_159)
+#plot differences
+
+plot(diff_mRNA_143, diff_protein_143, xlab="Difference in mRNA levels", ylab="Difference in Protein levels", main="Difference in mRNA v. Protein expression levels in protein 143")
+plot(diff_mRNA_159, diff_protein_159, xlab="Difference in mRNA levels", ylab="Differnece in Protein levels", main="Difference in mRNA v. Protein expression levels in protein 159")
+```
+
+The data visualization of the differences between mRNA and protein expression in protein 143 and 159 show that there are is a weak relationship between the two variables. The differences between mRNA or protein expression between species demonstrates that the changes in mRNA level do not strongly correlate with the changes in protein levels.
+
+### 6. Calculate correlation coefficients for differences between human and chimp protein and mRNA levels from problem 5. Do it for both samples. These are the correlations presented in the final sentence in the article\'s \"Results\" section -- compare and describe results.
+
+```{r Question 6, echo="TRUE"}
+cor(diff_protein_143, diff_mRNA_143, use="complete.obs")
+cor(diff_protein_159, diff_mRNA_159, use="complete.obs")
+```
+Protein 149 showed weak correlation between the differences between human and chimp protein and mRNA levels while protein 159 showed positive correlation between the human and chimp protein and mRNA levels.
+
+### 7. Fit two linear models – one for each sample – on the relationships between differences of mean RNA levels for humans and chimps vs differences of mean protein levels for humans and chimps. Present summary and diagnostics, anova significance assessment of the relationship – compare and describe results in plain English.
+
+```{r Question 7, echo=TRUE}
+#linear model of diff between mRNA between human+chimp and diff between protein expression between human+chimp for protein 143
+diff_143.lm <- lm(human_protein_mean - chimp_protein_mean ~ human_mRNA_mean - chimp_mRNA_mean)
+#linear model of diff between mRNA between human+chimp and diff between protein expression between human+chimp for protein 159
+diff_159.lm <- lm(human_protein_mean_159 - chimp_protein_mean_159~ human_mRNA_mean_159 - chimp_mRNA_mean_159)
+#Summary
+summary(diff_143.lm); summary(diff_159.lm)
+#ANOVA
+anova(diff_143.lm); anova(diff_159.lm)
+
+```
+
+The p-values for both linear models were above 0.05, therefore I have to conclude that there is not significance association. The ANOVA test for both linear models has interpreted that humans and chimp for both protein 143 and 159 does not show significant relationship between the difference in mRNA and protein expression levels.
+
+
+### 8.  For each gene run two t-tests contrasting humans and chimps using replicated measurements of its 1) mRNA levels, then 2) protein levels. 
+Use assumption of equal variances as this is what mentioning of “Student’s t-test” in the manuscript implies. Plot these p-values as two histograms (for mRNA and protein levels, respectively). Also generate X-Y scatterplot of these p￾values (p-value for protein level difference vs p-value for mRNA level difference between human and chimp). Repeat for both samples. Compare number of differences with p-values under 0.01 in all these comparisons with what is reported in the manuscript (last paragraph of section “Results”). Describe results of such comparison.
+
+```{r Question 8, echo=TRUE}
+#empty vectors to store my pvals
+pval_mRNA_143 <- c()
+pval_mRNA_159 <- c()
+pval_protein_143 <- c()
+pval_protein_159 <- c()
+
+##t-test for mRNA levels b/w humans and chimps protein 143
+for (i in 2:nrow(data_143.df)) {
+    if (any(is.na(data_143.df[i, c(4:9, 10:15)]))) {
+        next  # Skips NAs in .df
+    }
+    mRNA_143_ttest <- t.test(data_143.df[i, 4:9], data_143.df[i, 10:15], var.equal = TRUE)
+    pval_mRNA_143 <- c(pval_mRNA_143, mRNA_143_ttest$p.value)
+    #print(paste("T-test for row", i, "completed.")) <- used this to confirm that it looped every row
+}
+
+#t-test for protein expression levels b/w humans and chimps protein 143
+for (i in 2:nrow(data_143.df)) {
+    if (any(is.na(data_143.df[i, c(16:18, 19:21)]))) {
+        next  # Skip this row if it contains any missing values
+    }
+    protein_143_ttest <- t.test(data_143.df[i, 16:18], data_143.df[i, 19:21], var.equal = TRUE)
+    pval_protein_143 <- c(pval_protein_143, protein_143_ttest$p.value)
+}
+#t-test for mRNA levels b/w humans and chimps protein 159
+for (i in 2:nrow(data_159.df)) {
+    if (any(is.na(data_159.df[i, c(4:9, 10:15)]))) {
+        next  # Skip NAs in .df
+    }
+    mRNA_159_ttest <- t.test(data_159.df[i, 4:9], data_159.df[i, 10:15], var.equal = TRUE)
+    pval_mRNA_159 <- c(pval_mRNA_159, mRNA_159_ttest$p.value)
+}
+#t-test for protein expression levels b/w humans and chimps protein 159
+
+for (i in 2:nrow(data_159.df)) {
+    if (any(is.na(data_159.df[i, c(16:18, 19:21)]))) {
+        next  # Skip this row if it contains any missing values
+    }
+    protein_159_ttest <- t.test(data_159.df[i, 16:18], data_159.df[i, 19:21], var.equal = TRUE)
+    pval_protein_159 <- c(pval_protein_159, protein_159_ttest$p.value)
+}
+
+#histogram  mRNA level and protein level of protein 143
+hist(pval_mRNA_143, breaks=20)
+hist(pval_protein_143, breaks=20)
+#histogram mRNA level and protein level of protein 159
+hist(pval_mRNA_159, breaks=20)
+hist(pval_protein_159, breaks=20)
+
+#x-y scatterplot of p-vals protein level vs mRNA protein 143
+plot(pval_protein_143, pval_mRNA_143, xlab="protein expression level p-value", ylab="mRNA level p-value", main="mRNA level vs. protein exp level in Protein 143")
+
+#x-y scatterplot of pvals protein level vs mRNA protein 159
+plot(pval_protein_159, pval_mRNA_159, xlab="protein expression level p-value", ylab="mRNA level p-value", main="mRNA level vs. protein exp level in Protein 159")
+
+# Count p-values less than 0.01 for mRNA 143
+n_pval_mRNA_143 <- sum(pval_mRNA_143 < 0.01) ; n_pval_mRNA_143
+
+# Count p-values less than 0.01 for protein 143
+n_pval_protein_143 <- sum(pval_protein_143 < 0.01) ; n_pval_protein_143
+
+# Count p-values less than 0.01 for mRNA 159
+n_pval_mRNA_159 <- sum(pval_mRNA_159 < 0.01); n_pval_mRNA_159
+
+# Count p-values less than 0.01 for protein 159
+n_pval_protein_159 <- sum(pval_protein_159 < 0.01); n_pval_protein_159
+```
+
+There are 28 genes with significant mRNA expression difference and 8 genes with significant protein expression level difference in species in protein 143. There are 29 genes with significant mRNA expression difference and 10 genes with significant protein expression level difference in species in protein 159. Having a p-value of less than 0.01 suggests that the difference s statistically significant. The manuscript had 24 and 23 genes with significant mRNA expression difference compared to my calculations of 28 and 29 genes for 143 and 159 genes respectively.
+
+
+### 9. Also run t-test with assumption of unequal variances, compare the results, discuss which one seems to be more appropriate. Additionally, obtain the p￾values from running linear model followed by anova on the two groups –demonstrate that these p-values are the same as those obtained by the appropriate variety of t-test.
+
+```{r Question 9, echo=TRUE}
+#empty vectors to store my pvals
+pval_mRNA_143.2 <- c()
+pval_mRNA_159.2 <- c()
+pval_protein_143.2 <- c()
+pval_protein_159.2 <- c()
+pval_mRNA_143_lm <- c()
+pval_protein_143_lm <- c()
+pval_mRNA_159_lm <- c()
+pval_protein_159_lm <- c()
+##t-test for mRNA levels b/w humans and chimps protein 143 unequal variances
+for (i in 2:nrow(data_143.df)) {
+    if (any(is.na(data_143.df[i, c(4:9, 10:15)]))) {
+        next  # Skips NAs in .df
+    }
+    mRNA_143_ttest.2 <- t.test(data_143.df[i, 4:9], data_143.df[i, 10:15], var.equal = FALSE)
+    pval_mRNA_143.2 <- c(pval_mRNA_143.2, mRNA_143_ttest.2$p.value)
+    #linear model and anova
+    
+    lm_mRNA_143 <- lm(unlist(data_143.df[i, c(4:9)]) ~ unlist(data_143.df[i, c(10:15)]))
+
+    anova_mRNA_143 <- anova(lm_mRNA_143)
+    pval_mRNA_143_lm <- c(pval_mRNA_143_lm, anova_mRNA_143[[1,"Pr(>F)"]])
+}    
+   
+#t-test for protein expression levels b/w humans and chimps protein 143 unequal variance
+
+for (i in 2:nrow(data_143.df)) {
+    if (any(is.na(data_143.df[i, c(16:18, 19:21)]))) {
+        next  
+    }
+    protein_143_ttest.2 <- t.test(data_143.df[i, 16:18], data_143.df[i, 19:21], var.equal = FALSE)
+    pval_protein_143.2 <- c(pval_protein_143.2, protein_143_ttest.2$p.value)
+    #linear model and anova
+    
+    lm_protein_143 <- lm(unlist(data_143.df[i, c(16:18)]) ~ unlist(data_143.df[i, c(19:21)]))
+    anova_protein_143 <- anova(lm_protein_143)
+    pval_protein_143_lm <- c(pval_protein_143_lm, anova_protein_143[[1,"Pr(>F)"]])
+}
+##t-test for mRNA levels b/w humans and chimps protein 159 unequal variances
+for (i in 2:nrow(data_159.df)) {
+    if (any(is.na(data_159.df[i, c(4:9, 10:15)]))) {
+        next  # Skips NAs in .df
+    }
+    mRNA_159_ttest.2 <- t.test(data_159.df[i, 4:9], data_159.df[i, 10:15], var.equal = FALSE)
+    pval_mRNA_159.2 <- c(pval_mRNA_159.2, mRNA_159_ttest.2$p.value)
+    #linear model and anova
+    
+    lm_mRNA_159 <- lm(unlist(data_159.df[i, c(4:9)]) ~ unlist(data_159.df[i, c(10:15)]))
+    anova_mRNA_159 <- anova(lm_mRNA_159)
+    pval_mRNA_159_lm <- c(pval_mRNA_159_lm, anova_mRNA_159[[1,"Pr(>F)"]])
+}    
+   
+#t-test for protein expression levels b/w humans and chimps protein 159 unequal variance
+
+for (i in 2:nrow(data_159.df)) {
+    if (any(is.na(data_159.df[i, c(16:18, 19:21)]))) {
+        next  
+    }
+    protein_159_ttest.2 <- t.test(data_159.df[i, 16:18], data_159.df[i, 19:21], var.equal = FALSE)
+    pval_protein_159.2 <- c(pval_protein_159.2, protein_159_ttest.2$p.value)
+    #linear model and anova
+    
+    lm_protein_159 <- lm(unlist(data_159.df[i, c(16:18)]) ~ unlist(data_159.df[i, c(19:21)]))
+    anova_protein_159 <- anova(lm_protein_159)
+    pval_protein_159_lm <- c(pval_protein_159_lm, anova_protein_159[[1,"Pr(>F)"]])
+}
+```
+
+### 10. Find genes represented both in “143” and “159” data sets by identifying RefSeq ID present in both. [Hint: c(“a”,”b”,”c”)[c(“a”,”b”,”c”) %in% c(“b”,”c”,”d”)] will return “b” and “c”.] Plot XY-scatter plots of 1) mean human mRNA expression levels in the two samples (for the genes shared between the samples); 2) mean human protein levels in the two samples; 3) mean chimp mRNA levels in the two samples, and 4) mean chimp protein levels in the two samples. (e.g. mean human RNA level in “143” dataset versus mean human RNA level in “159” dataset for the same genes, etc.). Discuss the results.
+
+```{r Question 10, echo=TRUE}
+#Save RefSeqID in variable
+RefSeqID_143<-data_143.df$RefSeq..ID[2:144]
+RefSeqID_159<-data_159.df$RefSeq..ID[2:160]
+
+#Save matching indices
+matching_indices_143 <- which(RefSeqID_143 %in% RefSeqID_159)
+RefSeqID_143.df <- data.frame(data_143.df[matching_indices_143,])
+matching_indices_159 <- which(RefSeqID_159 %in% RefSeqID_143)
+RefSeqID_159.df <- data.frame(data_159.df[matching_indices_159,])
+
+#mean of mRNA expression human and chimp in protein 143 
+RefSeq_143_mRNAhuman_mean <- c()
+for (i in 2:nrow(RefSeqID_143.df)){
+  RefSeq_143_mRNAhuman_mean[i] <- rowMeans(RefSeqID_143.df[i, 4:9])
+}
+
+RefSeq_143_mRNAchimp_mean <-c()
+for (i in 2:nrow(RefSeqID_143.df)){
+  RefSeq_143_mRNAchimp_mean[i] <- rowMeans(RefSeqID_143.df[i, 10:15])
+}
+
+#mean of protein level human and chimp in protein 143
+RefSeq_143_protein_human_mean <- c()
+for (i in 2:nrow(RefSeqID_143.df)){
+  RefSeq_143_protein_human_mean[i] <- rowMeans(RefSeqID_143.df[i, 16:18])
+}
+
+RefSeq_143_protein_chimp_mean <-c()
+for (i in 2:nrow(RefSeqID_143.df)){
+  RefSeq_143_protein_chimp_mean[i] <- rowMeans(RefSeqID_143.df[i, 19:21])
+}
+
+#mean of mRNA expression human and chimp in protein 159 
+RefSeq_159_mRNAhuman_mean <- c()
+for (i in 2:nrow(RefSeqID_159.df)){
+  RefSeq_159_mRNAhuman_mean[i] <- rowMeans(RefSeqID_159.df[i, 4:9])
+}
+
+RefSeq_159_mRNAchimp_mean <-c()
+for (i in 2:nrow(RefSeqID_159.df)){
+  RefSeq_159_mRNAchimp_mean[i] <- rowMeans(RefSeqID_159.df[i, 10:15])
+}
+
+#mean of protein level human and chimp in protein 159
+RefSeq_159_protein_human_mean <- c()
+for (i in 2:nrow(RefSeqID_159.df)){
+  RefSeq_159_protein_human_mean[i] <- rowMeans(RefSeqID_159.df[i, 16:18])
+}
+
+RefSeq_159_protein_chimp_mean <-c()
+for (i in 2:nrow(RefSeqID_159.df)){
+  RefSeq_159_protein_chimp_mean[i] <- rowMeans(RefSeqID_159.df[i, 19:21])
+}
+
+#plot xy mean mRNA
+par(mfrow=c(2,2))
+plot(RefSeq_143_mRNAhuman_mean, RefSeq_159_mRNAhuman_mean)
+plot(RefSeq_143_protein_human_mean, RefSeq_159_protein_human_mean)
+
+plot(RefSeq_143_mRNAchimp_mean, RefSeq_159_mRNAchimp_mean,)
+plot(RefSeq_143_protein_chimp_mean, RefSeq_159_protein_chimp_mean)
+```
+
+For mean human mRNA levels in protein 143 and 159, there were matching means. Though there were matching genes represented in protein 143 and 159, the mRNA expression levels were not the same across the genes. For mean protein levels in humans, there doesn't seem to be any identical means between protein 143 and 159 but the means are quite close as they are clustered in an area of the graph. We see a similar trend when we compare mean chimp mRNA levels in protein 143 and 159 the positive trend of data plots represents the identical mean mRNA levels shared between both proteins. However,for mean chimp protein levels, there is no trend in the shared gened represented in protein 143 and 159.
+
+
+### 11. Compare reproducibility of each of the readouts (mRNA, protein, human, chimp) between these two dataset by running t-test on their replicate measurements in these two samples (i.e. contrast a sample of human mRNA expression level measurements in sample 143 vs a sample of mRNA expression level measurements in sample 159, for each gene, etc). Present results as distribution of p-values, compare them with p-values from contrasting humans and chimps in each sample, discuss the results in writing.
+
+```{r Question 11, echo=TRUE}
+#t-test
+pval_RefSeq_143_mRNA <- c()
+pval_RefSeq_143_prot <- c()
+pval_RefSeq_159_mRNA <- c()
+pval_RefSeq_159_prot <- c()
+
+for (i in 2:nrow(RefSeqID_143.df)) {
+    if (any(is.na(RefSeqID_143.df[i, c(4:9, 10:15)]))) {
+        next  # Skips NAs in .df
+    }
+    RefSeq_143_mRNA.tt <- t.test(RefSeqID_143.df[i, 4:9], RefSeqID_143.df[i, 10:15])
+    pval_RefSeq_143_mRNA <- c(pval_RefSeq_143_mRNA, RefSeq_143_mRNA.tt$p.value)
+    #print(paste("T-test for row", i, "completed.")) <- used this to confirm that it looped every row
+}
+
+#t-test for protein expression levels b/w humans and chimps protein 143
+for (i in 2:nrow(RefSeqID_143.df)) {
+    if (any(is.na(RefSeqID_143.df[i, c(16:18, 19:21)]))) {
+        next  # Skip this row if it contains any missing values
+    }
+    RefSeq_143_prot.tt <- t.test(RefSeqID_143.df[i, 16:18], RefSeqID_143.df[i, 19:21], var.equal = TRUE)
+    pval_RefSeq_143_prot <- c(pval_RefSeq_143_prot, RefSeq_143_prot.tt$p.value)
+}
+#t-test for mRNA levels b/w humans and chimps protein 159
+for (i in 2:nrow(RefSeqID_159.df)) {
+    if (any(is.na(RefSeqID_159.df[i, c(4:9, 10:15)]))) {
+        next  # Skip NAs in .df
+    }
+    RefSeq_159_mRNA.tt <- t.test(RefSeqID_159.df[i, 4:9], RefSeqID_159.df[i, 10:15], var.equal = TRUE)
+    pval_RefSeq_159_mRNA <- c(pval_RefSeq_159_mRNA, RefSeq_159_mRNA.tt$p.value)
+}
+#t-test for protein expression levels b/w humans and chimps protein 159
+
+for (i in 2:nrow(RefSeqID_159.df)) {
+    if (any(is.na(RefSeqID_159.df[i, c(16:18, 19:21)]))) {
+        next  # Skip this row if it contains any missing values
+    }
+    RefSeq_159_prot.tt <- t.test(RefSeqID_159.df[i, 16:18], RefSeqID_159.df[i, 19:21], var.equal = TRUE)
+    pval_RefSeq_159_prot <- c(pval_RefSeq_159_prot, RefSeq_159_prot.tt$p.value)
+}
+
+par(mfrow=c(2,2)); hist(pval_RefSeq_143_mRNA);hist(pval_RefSeq_143_prot); hist(pval_RefSeq_159_mRNA); hist(pval_RefSeq_159_prot)
+
+plot(pval_RefSeq_143_mRNA, pval_RefSeq_159_mRNA);plot(pval_RefSeq_143_prot, pval_RefSeq_159_prot)
+```
+
+p-value results for mRNA levels between protein 143 and protein 159 are similar. The histogram suggests that there are similar frequencies in p-values between 0.0 to 0.4. For better visualization, clusters of data points are seen in that area on the scatter plot graph. This may suggest that there are no systemic differences in reproducibility between the read outs. Thought not all points are the same across protein 143 and 159, the reproducibility is significant compared to the p-value of protein expression level. Even though we see a cluster near 0.0-0.1 on the scatterplot, you can see on the histogram there are varying frequencies across the p-value, thereby suggesting that this may be less reproducible
+
+
+### 12a. Understand results of lm fit on categorical predictor (i.e. values of fit coefficients). Hint: you can use “fusion protein” from ALL as categorical variable and gene expression, e.g. 1970_s_at as dependent variable. Calculate the means in the groups, and from those compute manually the coefficients reported by the linear model fit (see Notes part 1, page 11).
+
+```{r Question 12a, echo=TRUE}
+library(ALL); data(ALL)
+
+#create a data frame with fusion protein 
+fp.df <- data.frame(fp=pData(ALL)[,"fusion protein"],
+                     g=exprs(ALL)["1970_s_at",])
+
+#fit linear model 
+lm.fit <- lm(g~fp, data=fp.df)
+
+#get means of groups
+means <- tapply(fp.df$g, fp.df$fp, mean)
+
+#calculate coefficients manually
+manual.coeff <- means[2] - means[1]
+
+#coeff from linear model 
+coef(lm.fit)[2]
+
+#manually calcualted coefficient
+manual.coeff
+```
+
+
+### 12b. Confirm that anova with just two categories and t-test result in the same p-values and statistics (remember that anova assumes equal variance for the groups). No need to run multiple trials here, one example is sufficient.
+
+```{r Question 12b, echo=TRUE}
+
+#create two groups 
+group_1 <- rnorm(10, mean = 5, sd = 1)
+group_2 <- rnorm(10, mean = 6, sd = 1)
+
+# Combine groups into a single vector with a factor variable indicating group membership
+data <- data.frame(value = c(group_1, group_2), 
+                   group = factor(rep(c("group_1", "group_2"), each = 10)))
+
+#ANOVA test
+anova_results <- anova(lm(value ~ group, data = data))
+pval_anova <- anova_results$'Pr(>F)'[1]
+
+#t-test
+tt_results <- t.test(group_1, group_2)
+pval_tt <- tt_results$p.value
+
+#confirm
+pval_anova; pval_tt
+```
+
+
+### 12c. Compare values of chi-square for sum of 1, 3 and 10 normal variables squared, obtained using using rchisq vs obtained using rnorm - discuss differences between them. [Hint: build/draw large samples using each of the two methods, rnorm() or directly rchisq(); compare empirical distributions using QQplot].
+
+```{r Question 12c, echo=TRUE}
+sample_size <- 5000
+
+#generate 5000 samples of sum of squares of 1, 3, and 10 variables using rnorm
+sum.sq_1 <- replicate(sample_size, sum(rnorm(1)^2))
+sum.sq_3 <- replicate(sample_size, sum(rnorm(3)^2))
+sum.sq_10 <- replicate(sample_size, sum(rnorm(10)^2))
+
+#generate chi-square variables using rchisq
+chi.sq_1 <- rchisq(sample_size, df = 1)
+chi.sq_3 <- rchisq(sample_size, df=3)
+chi.sq_10 <- rchisq(sample_size, df=10)
+
+#compare using QQplot
+
+par(mfrow = c(3, 1))
+qqnorm(sum.sq_1, main = "QQ plot for sum of squares of 1 normal variable using rnorm()")
+qqline(sum.sq_1)
+
+qqnorm(sum.sq_3, main = "QQ plot for sum of squares of 3 normal variables using rnorm()")
+qqline(sum.sq_3)
+
+qqnorm(sum.sq_10, main = "QQ plot for sum of squares of 10 normal variables using rnorm()")
+qqline(sum.sq_10)
+
+qqnorm(chi.sq_1, main = "QQ plot for chi-squared variable with df=1 using rchisq()")
+qqline(chi.sq_1)
+
+qqnorm(chi.sq_3, main = "QQ plot for chi-squared variable with df=3 using rchisq()")
+qqline(chi.sq_3)
+
+qqnorm(chi.sq_10, main = "QQ plot for chi-squared variable with df=10 using rchisq()")
+qqline(chi.sq_10)
+
+```
+
+The QQplots for normal variable sum of 10 demonstrates that the method deviates from the chi-squared distribution meaning this would less likely follow chi squared distributions than sum squared of 1 or 3 normal variables. Additionally, rchisq and rnorm generates random numbers based on different distributions. rchisq generates from chi-squared distribution following the parameter, the degrees of freedom. rnorm is characterized by the two parameters, mean and standard deviation. 
+
+
+### 12d. Calculate “by hand” the rest of the expected values in remission/sex contingency table example (see Notes part 2, page 6).
+
+```{r Question 12d, echo=TRUE}
+table_ex <- table(pData(ALL)$sex,pData(ALL)$remission)
+
+#calcualte row and column
+row_totals <- apply(table_ex, 1, sum)
+col_totals <- apply(table_ex, 2, sum)
+
+grand_total <- sum(table_ex)
+
+example_table <- outer(row_totals, col_totals)/grand_total
+
+cbind(observed=table_ex, expected=round(example_table,2))
